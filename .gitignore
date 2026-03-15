@@ -1,0 +1,42 @@
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.vs/
+.vscode/
+.idea/
+.claude/
+*.user
+*.suo
+
+# .NET
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+appsettings.Development.json
+appsettings.Local.json
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+tmp/
+out-tsc/
+coverage/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# EF Core
+*.sqlite
+*.sqlite-journal
