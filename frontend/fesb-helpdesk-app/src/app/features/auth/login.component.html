@@ -1,0 +1,74 @@
+<div class="auth">
+  <div class="auth__card">
+    <div class="auth__brand">
+      <div class="auth__logo">FH</div>
+      <div>
+        <h1>FESB Helpdesk</h1>
+        <p>Sustav za studentske upite</p>
+      </div>
+    </div>
+
+    <p class="auth__eyebrow">01 — Prijava</p>
+    <h2 class="auth__title">Dobrodošli <em>natrag</em>.</h2>
+    <p class="auth__subtitle">Prijavite se svojim FESB računom da biste pristupili upitima, razgovorima i administraciji.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          class="form-control"
+          formControlName="email"
+          placeholder="ime.prezime@fesb.hr"
+          autocomplete="email"
+        />
+        @if (hasError('email', 'required')) {
+          <div class="form-error">Email je obavezan.</div>
+        }
+        @if (hasError('email', 'email')) {
+          <div class="form-error">Neispravan format email adrese.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Lozinka</label>
+        <input
+          id="password"
+          type="password"
+          class="form-control"
+          formControlName="password"
+          autocomplete="current-password"
+        />
+        @if (hasError('password', 'required')) {
+          <div class="form-error">Lozinka je obavezna.</div>
+        }
+        @if (hasError('password', 'minlength')) {
+          <div class="form-error">Lozinka mora imati najmanje 6 znakova.</div>
+        }
+      </div>
+
+      <button type="submit" class="btn auth__submit" [disabled]="loading()">
+        {{ loading() ? 'Prijava u tijeku…' : 'Prijavi se →' }}
+      </button>
+    </form>
+
+    <div class="auth__footer">
+      Nemate račun? <a routerLink="/registracija">Registrirajte se</a>
+    </div>
+  </div>
+
+  <aside class="auth-side">
+    <div class="auth-side__top">
+      <div class="auth-side__eyebrow">Fakultet elektrotehnike, strojarstva i brodogradnje</div>
+    </div>
+
+    <div class="auth-side__main">
+      <div class="auth-side__quote">
+        Jasna pitanja, jasni odgovori &mdash; <em>na jednom mjestu</em>.
+      </div>
+      <div class="auth-side__attrib">Helpdesk · Split</div>
+    </div>
+
+  </aside>
+</div>

@@ -1,0 +1,113 @@
+<div class="auth">
+  <div class="auth__card">
+    <div class="auth__brand">
+      <div class="auth__logo">FH</div>
+      <div>
+        <h1>FESB Helpdesk</h1>
+        <p>Sustav za studentske upite</p>
+      </div>
+    </div>
+
+    <p class="auth__eyebrow">02 — Registracija</p>
+    <h2 class="auth__title">Otvorite <em>svoj račun</em>.</h2>
+    <p class="auth__subtitle">Registracija je dostupna samo studentima s <b>&#64;fesb.hr</b> email adresom.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="firstName">Ime</label>
+        <input id="firstName" type="text" class="form-control" formControlName="firstName" />
+        @if (hasError('firstName', 'required')) {
+          <div class="form-error">Ime je obavezno.</div>
+        }
+        @if (hasError('firstName', 'minlength')) {
+          <div class="form-error">Ime mora imati najmanje 2 znaka.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="lastName">Prezime</label>
+        <input id="lastName" type="text" class="form-control" formControlName="lastName" />
+        @if (hasError('lastName', 'required')) {
+          <div class="form-error">Prezime je obavezno.</div>
+        }
+        @if (hasError('lastName', 'minlength')) {
+          <div class="form-error">Prezime mora imati najmanje 2 znaka.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email (&#64;fesb.hr)</label>
+        <input
+          id="email"
+          type="email"
+          class="form-control"
+          formControlName="email"
+          placeholder="ime.prezime@fesb.hr"
+          autocomplete="email"
+        />
+        @if (hasError('email', 'required')) {
+          <div class="form-error">Email je obavezan.</div>
+        }
+        @if (hasError('email', 'email')) {
+          <div class="form-error">Neispravan format email adrese.</div>
+        }
+        @if (hasError('email', 'notFesb')) {
+          <div class="form-error">Dozvoljene su samo &#64;fesb.hr email adrese.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Lozinka</label>
+        <input
+          id="password"
+          type="password"
+          class="form-control"
+          formControlName="password"
+          autocomplete="new-password"
+        />
+        @if (hasError('password', 'required')) {
+          <div class="form-error">Lozinka je obavezna.</div>
+        }
+        @if (hasError('password', 'minlength')) {
+          <div class="form-error">Lozinka mora imati najmanje 6 znakova.</div>
+        }
+      </div>
+
+      <button type="submit" class="btn auth__submit" [disabled]="loading()">
+        {{ loading() ? 'Registracija u tijeku…' : 'Registriraj se →' }}
+      </button>
+    </form>
+
+    <div class="auth__footer">
+      Već imate račun? <a routerLink="/prijava">Prijavite se</a>
+    </div>
+  </div>
+
+  <aside class="auth-side">
+    <div class="auth-side__top">
+      <div class="auth-side__eyebrow">Fakultet elektrotehnike, strojarstva i brodogradnje</div>
+    </div>
+
+    <div class="auth-side__main">
+      <div class="auth-side__quote">
+        Brži odgovori, manje <em>lutanja hodnicima</em>.
+      </div>
+      <div class="auth-side__attrib">Helpdesk · Split</div>
+    </div>
+
+    <div class="auth-side__meta">
+      <div class="auth-side__meta-item">
+        <span class="label">Registracija</span>
+        <span class="value">&#64;fesb.hr</span>
+      </div>
+      <div class="auth-side__meta-item">
+        <span class="label">Klasifikacija</span>
+        <span class="value">Gemini AI</span>
+      </div>
+      <div class="auth-side__meta-item">
+        <span class="label">Sigurno</span>
+        <span class="value">JWT · BCrypt</span>
+      </div>
+    </div>
+  </aside>
+</div>
