@@ -1,0 +1,60 @@
+<div class="shell" [class.shell--nav-open]="mobileNavOpen()">
+  <header class="topbar">
+    <button
+      type="button"
+      class="topbar__menu"
+      (click)="toggleNav()"
+      [attr.aria-expanded]="mobileNavOpen()"
+      aria-label="Otvori izbornik"
+    >
+      <i class="fa-solid" [class.fa-bars]="!mobileNavOpen()" [class.fa-xmark]="mobileNavOpen()" aria-hidden="true"></i>
+    </button>
+    <div class="topbar__brand">
+      <div class="topbar__logo">FH</div>
+      <span class="topbar__title">FESB Helpdesk</span>
+    </div>
+  </header>
+
+  <div class="backdrop" (click)="closeNav()" aria-hidden="true"></div>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand__logo">FH</div>
+      <div>
+        <h1 class="brand__title">FESB Helpdesk</h1>
+        <p class="brand__subtitle">Sustav za studentske upite</p>
+      </div>
+    </div>
+
+    <nav class="nav">
+      @for (item of visibleNav(); track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="nav__link--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav__link"
+        >
+          <i class="nav__icon" [class]="item.icon" aria-hidden="true"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="user-card">
+      <div class="user-card__avatar">
+        {{ user()?.firstName?.[0] }}{{ user()?.lastName?.[0] }}
+      </div>
+      <div class="user-card__info">
+        <div class="user-card__name">{{ user()?.firstName }} {{ user()?.lastName }}</div>
+        <div class="user-card__role">{{ roleLabel() }}</div>
+      </div>
+      <button type="button" class="user-card__logout" (click)="logout()" title="Odjava" aria-label="Odjava">
+        <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+      </button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
