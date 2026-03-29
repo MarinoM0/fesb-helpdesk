@@ -1,0 +1,98 @@
+<div class="page-header dashboard-header">
+  <div>
+    <p class="eyebrow">{{ todayLabel() }} · Nadzorna ploča</p>
+    <h1>Dobrodošli, <em>{{ user()?.firstName }}</em>.</h1>
+    <p>{{ welcomeSubtitle() }}</p>
+  </div>
+  @if (canCreate()) {
+    <a routerLink="/upiti/novi" class="btn btn--primary">Novi upit →</a>
+  }
+</div>
+
+<div class="grid-cards">
+  <div class="stat-card stat-card--info">
+    <div class="stat-card__label">Ukupno</div>
+    <div class="stat-card__value">{{ padNum(stats()?.total ?? 0) }}</div>
+    <div class="stat-card__sub">upita u sustavu</div>
+  </div>
+  <div class="stat-card stat-card--primary">
+    <div class="stat-card__label">Novi</div>
+    <div class="stat-card__value">{{ padNum(stats()?.novo ?? 0) }}</div>
+    <div class="stat-card__sub">čekaju obradu</div>
+  </div>
+  <div class="stat-card stat-card--warning">
+    <div class="stat-card__label">U obradi</div>
+    <div class="stat-card__value">{{ padNum(stats()?.uObradi ?? 0) }}</div>
+    <div class="stat-card__sub">aktivno rješavaju</div>
+  </div>
+  <div class="stat-card stat-card--success">
+    <div class="stat-card__label">Riješeno</div>
+    <div class="stat-card__value">{{ padNum(stats()?.rijeseno ?? 0) }}</div>
+    <div class="stat-card__sub">zatvoreno ukupno</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div>
+      <p class="eyebrow">Ispis</p>
+      <h2 class="section-title">Nedavni upiti</h2>
+      <p class="section-sub">Posljednjih 5 ažuriranih upita</p>
+    </div>
+    <a routerLink="/upiti" class="btn btn--ghost btn--sm">Svi upiti →</a>
+  </div>
+
+  @if (loading()) {
+    <div class="loader">Učitavanje</div>
+  } @else if (recent().length === 0) {
+    <div class="empty-state">
+      <div class="empty-state__icon">—</div>
+      <div class="empty-state__title">Nema upita za prikaz</div>
+      <p>Trenutno nema upita koje biste mogli vidjeti.</p>
+    </div>
+  } @else {
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Naslov</th>
+            <th>Kategorija</th>
+            <th>Status</th>
+            <th>Student</th>
+            <th style="text-align: right">Ažurirano</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of recent(); track t.id) {
+            <tr [routerLink]="['/upiti', t.id]">
+              <td><b>{{ t.title }}</b></td>
+              <td>{{ t.categoryName }}</td>
+              <td><span class="status-badge" [class]="statusClass(t.status)">{{ t.status }}</span></td>
+              <td>{{ t.studentName }}</td>
+              <td class="mono" style="text-align: right">{{ t.updatedAt | date: 'dd.MM.yy · HH:mm' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<style>
+  .dashboard-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.02;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+  }
+  .card-header .eyebrow { margin-bottom: 0.35rem; }
+  .card-header .section-title { margin: 0; }
+  .card-header .section-sub { margin-top: 0.25rem; }
+</style>
