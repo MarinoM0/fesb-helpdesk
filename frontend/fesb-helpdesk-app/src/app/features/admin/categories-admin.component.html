@@ -1,0 +1,195 @@
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Administracija · Kategorije</p>
+    <h1>Kategorije <em>upita</em>.</h1>
+    <p>Dodavanje, uređivanje i brisanje kategorija koje Gemini koristi za klasifikaciju.</p>
+  </div>
+</div>
+
+<div class="admin-grid">
+  <div class="card admin-form">
+    <p class="eyebrow">{{ editingId() ? 'Uredi' : 'Nova stavka' }}</p>
+    <h2 class="admin-form__title">
+      {{ editingId() ? 'Uredi kategoriju' : 'Nova kategorija' }}
+    </h2>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="name">Naziv</label>
+        <input id="name" type="text" class="form-control" formControlName="name" />
+        @if (hasError('name', 'required')) {
+          <div class="form-error">Naziv je obavezan.</div>
+        }
+        @if (hasError('name', 'minlength')) {
+          <div class="form-error">Naziv mora imati najmanje 2 znaka.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Opis (opcionalno)</label>
+        <textarea
+          id="description"
+          class="form-control"
+          formControlName="description"
+          rows="4"
+        ></textarea>
+        @if (hasError('description', 'maxlength')) {
+          <div class="form-error">Opis može imati najviše 500 znakova.</div>
+        }
+      </div>
+
+      <div class="admin-form__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Spremanje…' : (editingId() ? 'Spremi →' : 'Dodaj →') }}
+        </button>
+        @if (editingId()) {
+          <button type="button" class="btn btn--ghost" (click)="cancelEdit()">Odustani</button>
+        }
+      </div>
+    </form>
+  </div>
+
+  <div class="card admin-list" style="padding: 0; overflow: hidden">
+    <div class="admin-list__header">
+      <p class="eyebrow">Ispis</p>
+      <h2 class="admin-list__title">
+        Popis <span class="mono admin-list__count">{{ categories().length }}</span>
+      </h2>
+    </div>
+
+    @if (loading()) {
+      <div class="loader">Učitavanje</div>
+    } @else if (categories().length === 0) {
+      <div class="empty-state">
+        <div class="empty-state__icon">—</div>
+        <div class="empty-state__title">Nema kategorija</div>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 56px">#</th>
+              <th>Naziv</th>
+              <th>Opis</th>
+              <th style="width: 140px; text-align: right">Akcije</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of categories(); track c.id; let i = $index) {
+              <tr>
+                <td class="mono">{{ (i + 1).toString().padStart(2, '0') }}</td>
+                <td>
+                  <b>{{ c.name }}</b>
+                  @if (isProtected(c)) {
+                    <span class="role-badge" style="margin-left: 0.5rem">Zaštićeno</span>
+                  }
+                </td>
+                <td class="muted-col">{{ c.description || '—' }}</td>
+                <td class="actions-cell">
+                  <div class="actions-stack">
+                    <button
+                      type="button"
+                      class="btn btn--sm btn--ghost"
+                      (click)="startEdit(c)"
+                    >
+                      <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                      Uredi
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn--sm btn--danger"
+                      (click)="remove(c)"
+                      [disabled]="isProtected(c)"
+                    >
+                      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                      Obriši
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<style>
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .admin-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .admin-form { position: static; top: auto; }
+  }
+
+  .admin-form { padding: 1.75rem; position: sticky; top: 1rem; }
+  .admin-form .eyebrow { margin-bottom: 0.35rem; }
+  .admin-form__title {
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 1.2rem;
+    letter-spacing: -0.022em;
+    margin: 0 0 1.5rem;
+  }
+  .admin-form__actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--hair);
+    margin-top: 1rem;
+  }
+
+  .admin-list__header {
+    padding: 1.5rem 1.75rem 1.25rem;
+    border-bottom: 1px solid var(--hair);
+  }
+  .admin-list__header .eyebrow { margin-bottom: 0.35rem; }
+  .admin-list__title {
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 1.2rem;
+    letter-spacing: -0.022em;
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+  .admin-list__count {
+    font-family: var(--font-mono);
+    font-style: normal;
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+  }
+  .muted-col { color: var(--ink-3); font-size: 0.82rem; }
+
+  .actions-cell {
+    text-align: right;
+    vertical-align: middle;
+  }
+  .actions-stack {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    align-items: stretch;
+    min-width: 110px;
+  }
+  .actions-stack .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  @media (max-width: 720px) {
+    .admin-form { padding: 1.25rem; }
+    .admin-list__header { padding: 1.15rem 1rem 0.9rem; }
+    .actions-stack { min-width: 92px; gap: 0.4rem; }
+  }
+</style>
