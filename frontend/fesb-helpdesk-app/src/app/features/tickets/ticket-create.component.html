@@ -1,0 +1,202 @@
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Novo · Upit</p>
+    <h1>Pošaljite <em>novi upit</em>.</h1>
+    <p>Ispunite formular i odaberite kome se upit šalje. Kategoriju će automatski odrediti sustav.</p>
+  </div>
+  <a routerLink="/upiti" class="btn btn--ghost">← Natrag na upite</a>
+</div>
+
+<div class="create-layout">
+  <div class="card create-card">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="title">Naslov</label>
+        <input
+          id="title"
+          type="text"
+          class="form-control"
+          formControlName="title"
+          placeholder="Npr. Pitanje o terminu ispita"
+        />
+        @if (hasError('title', 'required')) {
+          <div class="form-error">Naslov je obavezan.</div>
+        }
+        @if (hasError('title', 'minlength')) {
+          <div class="form-error">Naslov mora imati najmanje 5 znakova.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Opis</label>
+        <textarea
+          id="description"
+          class="form-control"
+          formControlName="description"
+          rows="7"
+          placeholder="Što detaljnije opišite svoj upit…"
+        ></textarea>
+        @if (hasError('description', 'required')) {
+          <div class="form-error">Opis je obavezan.</div>
+        }
+        @if (hasError('description', 'minlength')) {
+          <div class="form-error">Opis mora imati najmanje 10 znakova.</div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Primatelj upita</label>
+        <div class="recipient-toggle">
+          <label class="recipient-option" [class.recipient-option--active]="recipientType() === 'referada'">
+            <input type="radio" formControlName="recipientType" value="referada" />
+            <div class="recipient-option__body">
+              <div class="recipient-option__header">
+                <span class="recipient-option__num mono">01</span>
+                <span class="recipient-option__title">Referada</span>
+              </div>
+              <div class="recipient-option__desc">Za opća pitanja, potvrde i administrativne upite.</div>
+            </div>
+            <div class="recipient-option__check" aria-hidden="true"></div>
+          </label>
+          <label class="recipient-option" [class.recipient-option--active]="recipientType() === 'nastavnik'">
+            <input type="radio" formControlName="recipientType" value="nastavnik" />
+            <div class="recipient-option__body">
+              <div class="recipient-option__header">
+                <span class="recipient-option__num mono">02</span>
+                <span class="recipient-option__title">Nastavnik</span>
+              </div>
+              <div class="recipient-option__desc">Ako se upit odnosi na konkretnog nastavnika ili kolegij.</div>
+            </div>
+            <div class="recipient-option__check" aria-hidden="true"></div>
+          </label>
+        </div>
+      </div>
+
+      @if (recipientType() === 'nastavnik') {
+        <div class="form-group">
+          <label class="form-label" for="recipientEmail">Email nastavnika</label>
+          <input
+            id="recipientEmail"
+            type="email"
+            class="form-control"
+            formControlName="recipientEmail"
+            placeholder="ime.prezime@fesb.hr"
+          />
+          @if (hasError('recipientEmail', 'required')) {
+            <div class="form-error">Email nastavnika je obavezan.</div>
+          }
+          @if (hasError('recipientEmail', 'email')) {
+            <div class="form-error">Neispravan format email adrese.</div>
+          }
+          <div class="form-hint">Upit će biti dostupan nastavniku s ovom email adresom.</div>
+        </div>
+      }
+
+      <div class="create-card__actions">
+        <button type="submit" class="btn btn--primary" [disabled]="loading()">
+          {{ loading() ? 'Slanje…' : 'Pošalji upit →' }}
+        </button>
+        <a routerLink="/upiti" class="btn btn--ghost">Odustani</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .create-layout {
+    display: block;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  @media (max-width: 720px) {
+    .create-card { padding: 1.25rem 1.1rem; }
+    .create-card__actions { flex-direction: column; }
+    .create-card__actions .btn { width: 100%; }
+  }
+
+  .create-card { padding: 2rem 2.25rem; }
+  .create-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--hair);
+  }
+
+  .recipient-toggle {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.65rem;
+  }
+  .recipient-option {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--hair-strong);
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: var(--surface);
+    transition: all 0.18s var(--ease);
+    position: relative;
+  }
+  .recipient-option:hover {
+    border-color: var(--ink);
+    background: var(--paper);
+  }
+  .recipient-option--active {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .recipient-option input { position: absolute; opacity: 0; pointer-events: none; }
+  .recipient-option__body { min-width: 0; }
+  .recipient-option__header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.2rem;
+  }
+  .recipient-option__num {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    opacity: 0.5;
+  }
+  .recipient-option__title {
+    font-weight: 500;
+    font-size: 0.94rem;
+    letter-spacing: -0.015em;
+  }
+  .recipient-option__desc {
+    font-size: 0.76rem;
+    color: var(--ink-3);
+    line-height: 1.45;
+  }
+  .recipient-option--active .recipient-option__desc {
+    color: rgba(250, 250, 249, 0.6);
+  }
+  .recipient-option__check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--hair-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .recipient-option--active .recipient-option__check {
+    border-color: var(--paper);
+    background: var(--paper);
+  }
+  .recipient-option--active .recipient-option__check::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+
+</style>
