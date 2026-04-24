@@ -1,0 +1,522 @@
+@if (loading()) {
+  <div class="loader">Učitavanje upita</div>
+} @else if (ticket(); as t) {
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Upit</p>
+      <h1>{{ t.title }}</h1>
+      <p class="header-meta">Otvoreno <span class="mono">{{ t.createdAt | date: 'dd.MM.yyyy · HH:mm' }}</span></p>
+      <p class="header-meta">Posljednja aktivnost <span class="mono">{{ t.updatedAt | date: 'dd.MM.yyyy · HH:mm' }}</span></p>
+    </div>
+    <a routerLink="/upiti" class="btn btn--ghost">← Svi upiti</a>
+  </div>
+
+  <div class="detail">
+    <div class="detail__main">
+      <article class="card article">
+        <div class="meta-strip">
+          <span class="status-badge" [class]="statusClass(t.status)">{{ t.status }}</span>
+          <div class="meta-item">
+            <span class="meta-item__label">Kategorija</span>
+            <span class="meta-item__value">{{ t.categoryName }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-item__label">Primatelj</span>
+            <span class="meta-item__value">
+              @if (t.recipientType === 'nastavnik') {
+                Nastavnik <span class="mono" style="color: var(--ink-3)">· {{ t.recipientEmail }}</span>
+              } @else {
+                Referada
+              }
+            </span>
+          </div>
+        </div>
+
+        <p class="article__eyebrow">Opis upita</p>
+        <p class="description">{{ t.description }}</p>
+
+        <div class="student-info">
+          <div class="student-info__avatar">
+            {{ t.studentName.charAt(0) }}
+          </div>
+          <div class="student-info__text">
+            <div class="student-info__name">{{ t.studentName }}</div>
+            <div class="student-info__email mono">{{ t.studentEmail }}</div>
+          </div>
+          <div class="student-info__stamp mono">
+            {{ t.createdAt | date: 'dd.MM.yy' }}
+          </div>
+        </div>
+      </article>
+
+      <section class="card replies-card">
+        <div class="replies-header">
+          <p class="eyebrow">Razgovor</p>
+          <h2>{{ t.replies.length }} {{ t.replies.length === 1 ? 'odgovor' : 'odgovora' }}</h2>
+        </div>
+
+        @if (t.replies.length === 0) {
+          <div class="empty-state">
+            <div class="empty-state__icon">—</div>
+            <div class="empty-state__title">Još nema odgovora</div>
+            <p>Budite prvi koji će odgovoriti na ovaj upit.</p>
+          </div>
+        } @else {
+          <div class="thread">
+            @for (r of t.replies; track r.id; let i = $index) {
+              <div class="thread__item" [class.thread__item--own]="r.authorRole === role()">
+                <div class="thread__gutter">
+                  <div class="thread__avatar">{{ r.authorName.charAt(0) }}</div>
+                  @if (i < t.replies.length - 1) {
+                    <div class="thread__line"></div>
+                  }
+                </div>
+                <div class="thread__content">
+                  <div class="thread__header">
+                    <div>
+                      <span class="thread__author">{{ r.authorName }}</span>
+                      <span class="role-badge" style="margin-left: 0.5rem">{{ authorLabel(r.authorRole) }}</span>
+                    </div>
+                    <span class="thread__time mono">{{ r.createdAt | date: 'dd.MM.yy · HH:mm' }}</span>
+                  </div>
+                  <div class="thread__body">{{ r.message }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (canReply()) {
+          <form [formGroup]="replyForm" (ngSubmit)="submitReply()" class="reply-form">
+            <p class="eyebrow" style="margin-bottom: 0.6rem">Vaš odgovor</p>
+            <textarea
+              class="form-control"
+              formControlName="message"
+              rows="4"
+              placeholder="Napišite svoj odgovor…"
+            ></textarea>
+            <div class="reply-form__actions">
+              <button type="submit" class="btn btn--primary" [disabled]="saving()">
+                {{ saving() ? 'Slanje…' : 'Pošalji odgovor →' }}
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+    </div>
+
+    <aside class="detail__aside">
+      @if (canChangeStatus()) {
+        <div class="card aside-card">
+          <p class="eyebrow">Status</p>
+          <div class="status-buttons">
+            @for (s of statuses; track s) {
+              <button
+                type="button"
+                class="status-btn"
+                [class.status-btn--active]="t.status === s"
+                (click)="changeStatus(s)"
+              >
+                <span class="status-btn__dot" [class]="statusClass(s)"></span>
+                {{ s }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (canChangeCategory()) {
+        <div class="card aside-card">
+          <p class="eyebrow">Kategorija</p>
+          <select
+            class="form-control"
+            (change)="changeCategory(+$any($event.target).value)"
+          >
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id" [selected]="c.id === t.categoryId">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (canAssignNastavnik()) {
+        <div class="card aside-card">
+          <p class="eyebrow">Preusmjeri</p>
+          <p class="aside-card__desc">Upit možete dodijeliti nastavniku unosom njegove email adrese.</p>
+          <form [formGroup]="assignForm" (ngSubmit)="assignNastavnik()" novalidate>
+            <div class="form-group">
+              <input
+                type="email"
+                class="form-control"
+                formControlName="email"
+                placeholder="ime.prezime@fesb.hr"
+              />
+            </div>
+            <button type="submit" class="btn btn--sm" style="width: 100%">
+              Dodijeli →
+            </button>
+          </form>
+        </div>
+      }
+
+      @if (canManageAsAdmin()) {
+        <div class="card aside-card">
+          <p class="eyebrow">Admin · Preusmjeri</p>
+          <p class="aside-card__desc">
+            Trenutno:
+            @if (t.recipientType === 'nastavnik') {
+              <b>Nastavnik</b> <span class="mono">{{ t.recipientEmail }}</span>
+            } @else {
+              <b>Referada</b>
+            }
+          </p>
+          <form [formGroup]="reassignForm" (ngSubmit)="reassignTicket()" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="reassign-type">Novi primatelj</label>
+              <select id="reassign-type" class="form-control" formControlName="recipientType">
+                <option value="referada">Referada</option>
+                <option value="nastavnik">Nastavnik</option>
+              </select>
+            </div>
+
+            @if (reassignRecipient() === 'nastavnik') {
+              <div class="form-group">
+                <label class="form-label" for="reassign-email">Email nastavnika</label>
+                <input
+                  id="reassign-email"
+                  type="email"
+                  class="form-control"
+                  formControlName="email"
+                  placeholder="ime.prezime@fesb.hr"
+                />
+              </div>
+            }
+
+            <button type="submit" class="btn btn--sm" style="width: 100%">
+              Preusmjeri →
+            </button>
+          </form>
+        </div>
+
+        <div class="card aside-card aside-card--danger">
+          <p class="eyebrow" style="color: var(--danger)">Brisanje</p>
+          <p class="aside-card__desc">Brisanje upita je trajno i uklanja sve odgovore.</p>
+          <button
+            type="button"
+            class="btn btn--sm btn--danger"
+            style="width: 100%"
+            (click)="deleteTicket()"
+          >
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            Obriši upit
+          </button>
+        </div>
+      }
+
+      <div class="aside-note mono">
+        {{ t.status }}
+      </div>
+    </aside>
+  </div>
+}
+
+<style>
+  .header-meta {
+    margin: 0.15rem 0 0;
+    line-height: 1.55;
+  }
+
+  .detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 288px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .detail { grid-template-columns: 1fr; gap: 1rem; }
+  }
+  .detail__aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: sticky;
+    top: 1rem;
+  }
+  @media (max-width: 960px) {
+    .detail__aside { position: static; top: auto; }
+  }
+
+  .aside-card { padding: 1.25rem 1.35rem; }
+  .aside-card .eyebrow { margin-bottom: 0.85rem; }
+  .aside-card__desc {
+    font-size: 0.78rem;
+    color: var(--ink-3);
+    margin: -0.35rem 0 0.85rem;
+    line-height: 1.5;
+  }
+  .aside-card--danger {
+    border-color: color-mix(in srgb, var(--danger) 35%, var(--hair));
+    background: color-mix(in srgb, var(--danger) 3%, var(--surface));
+  }
+  .aside-note {
+    text-align: right;
+    font-size: 0.65rem;
+    color: var(--ink-4);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 0.5rem;
+  }
+
+  .article { padding: 2rem 2.25rem; }
+  @media (max-width: 720px) {
+    .article { padding: 1.25rem 1.1rem; }
+    .meta-strip { gap: 1rem 1.5rem; padding-bottom: 1rem; }
+    .student-info {
+      grid-template-columns: auto 1fr;
+      gap: 0.7rem;
+      padding: 0.8rem 0.9rem;
+      margin-top: 1.25rem;
+    }
+    .student-info__stamp { display: none; }
+  }
+  .article__eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin: 1.75rem 0 0.5rem;
+  }
+
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--hair);
+    row-gap: 1rem;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 3px; }
+  .meta-item__label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .meta-item__value {
+    font-size: 0.85rem;
+    color: var(--ink);
+    letter-spacing: -0.008em;
+  }
+
+  .description {
+    white-space: pre-wrap;
+    line-height: 1.7;
+    color: var(--ink);
+    margin: 0.4rem 0 0;
+    font-size: 0.95rem;
+    letter-spacing: -0.006em;
+  }
+
+  .student-info {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+    background: var(--surface-soft);
+    border: 1px solid var(--hair);
+    border-radius: var(--radius);
+    margin-top: 1.75rem;
+  }
+  .student-info__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+  }
+  .student-info__text { min-width: 0; }
+  .student-info__name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--ink);
+    letter-spacing: -0.012em;
+  }
+  .student-info__email {
+    font-size: 0.74rem;
+    color: var(--ink-3);
+    margin-top: 2px;
+  }
+  .student-info__stamp {
+    font-size: 0.7rem;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+
+  .replies-card { padding: 1.75rem; }
+  @media (max-width: 720px) {
+    .replies-card { padding: 1.15rem 1rem; }
+    .thread__item { grid-template-columns: 32px 1fr; gap: 0.7rem; }
+    .thread__avatar { width: 28px; height: 28px; font-size: 0.66rem; }
+  }
+  .replies-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--hair);
+  }
+  .replies-header h2 {
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 1.3rem;
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+
+  .thread {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .thread__item {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 1rem;
+    padding-bottom: 1.35rem;
+  }
+  .thread__item:last-child { padding-bottom: 0; }
+
+  .thread__gutter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .thread__avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .thread__item--own .thread__avatar {
+    background: var(--primary);
+  }
+  .thread__line {
+    flex: 1;
+    width: 1px;
+    background: var(--hair);
+    margin-top: 0.4rem;
+  }
+
+  .thread__content {
+    padding: 0.2rem 0 0;
+  }
+  .thread__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .thread__author {
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .thread__time {
+    color: var(--ink-3);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+  }
+  .thread__body {
+    white-space: pre-wrap;
+    line-height: 1.65;
+    font-size: 0.88rem;
+    color: var(--ink-2);
+    letter-spacing: -0.008em;
+    padding: 0.5rem 0 0.25rem;
+  }
+  .thread__item--own .thread__body {
+    color: var(--ink);
+  }
+
+  .reply-form {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--hair);
+  }
+  .reply-form__actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    justify-content: flex-end;
+  }
+
+  .status-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .status-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.8rem;
+    background: transparent;
+    border: 1px solid var(--hair);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    letter-spacing: -0.008em;
+  }
+  .status-btn:hover {
+    background: var(--paper);
+    border-color: var(--hair-strong);
+    color: var(--ink);
+  }
+  .status-btn__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+  .status-btn__dot.status--novo { color: var(--info); }
+  .status-btn__dot.status--u-obradi { color: var(--warning); }
+  .status-btn__dot.status--rijeseno { color: var(--success); }
+  .status-btn--active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+
+    &:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  }
+</style>
